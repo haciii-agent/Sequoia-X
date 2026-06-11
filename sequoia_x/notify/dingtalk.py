@@ -29,6 +29,11 @@ STRATEGY_NAMES = {
     "UptrendLimitDownStrategy": "趋势跌停",
     "RpsBreakoutStrategy": "RPS突破",
     "PrivatePlacementStrategy": "定增机会",
+    "ShortTermMomentumStrategy": "短线动量",
+    "VolumeBreakoutStrategy": "放量突破",
+    "GapUpFollowStrategy": "跳空跟随",
+    "ConsecutiveRedStrategy": "连阴反包",
+    "ShortTermPullbackStrategy": "回踩支撑",
 }
 
 
