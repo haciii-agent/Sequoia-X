@@ -54,3 +54,6 @@ RUN_BACKFILL_README.txt
 __pycache__/
 *.pyc
 .venv/
+
+# ML cache (large files)
+data/ml_cache/
