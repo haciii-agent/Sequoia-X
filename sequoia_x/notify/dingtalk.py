@@ -195,6 +195,40 @@ class DingTalkNotifier:
             "comprehensive",
         )
 
+    def send_backtest_report(self, results: list) -> None:
+        """推送回测报告。"""
+        from sequoia_x.analysis.backtest import BacktestResult
+        from sequoia_x.core.logger import get_logger
+        bt_logger = get_logger(__name__)
+
+        from datetime import date
+        today = date.today().strftime("%Y-%m-%d")
+
+        lines = [
+            "## Sequoia-X 策略回测报告",
+            f"**日期：** {today}",
+            "",
+            "| 策略 | 胜率 | 盈亏比 | 累计收益 | 最大回撤 | 夏普 | 交易数 |",
+            "|------|------|--------|----------|----------|------|--------|",
+        ]
+
+        for r in results:
+            lines.append(
+                f"| {r.strategy_name} | {r.win_rate:.1f}% | {r.profit_loss_ratio:.2f} | "
+                f"{r.total_return:+.1f}% | {r.max_drawdown:.1f}% | "
+                f"{r.sharpe_ratio:.2f} | {r.valid_trades} |"
+            )
+
+        lines.append("")
+        for r in results:
+            lines.append(f"**{r.strategy_name}**：{r.summary}")
+
+        lines.append("")
+        lines.append("---")
+        lines.append("回测数据仅供参考，历史表现不代表未来收益。")
+
+        self._send_markdown(f"回测报告 ({today})", "\n".join(lines), "backtest")
+
     def _send_markdown(self, title: str, markdown_text: str, webhook_key: str = "default") -> None:
         """发送 Markdown 消息到钉钉。"""
         payload = {
