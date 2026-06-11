@@ -36,3 +36,21 @@ build/
 
 # Hypothesis 测试缓存
 .hypothesis/
+
+# Data files
+data/*.db
+data/*.db-journal
+
+# Backfill scripts
+bj_fill.py
+fast_backfill.py
+run_backfill.bat
+run_backfill.sh
+run_fast.bat
+run_fast_backfill.bat
+RUN_BACKFILL_README.txt
+
+# Python
+__pycache__/
+*.pyc
+.venv/

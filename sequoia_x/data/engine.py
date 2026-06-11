@@ -88,7 +88,9 @@ class DataEngine:
 
     @staticmethod
     def _to_baostock_code(symbol: str) -> str:
-        """将纯数字代码转为 baostock 格式：6/9开头 -> sh，其余 -> sz。"""
+        """将纯数字代码转为 baostock 格式。"""
+        if symbol.startswith("920") or symbol.startswith(("4", "8")):
+            return f"bj.{symbol}"
         prefix = "sh" if symbol.startswith(("6", "9")) else "sz"
         return f"{prefix}.{symbol}"
 

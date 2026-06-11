@@ -23,15 +23,16 @@ class HighTightFlagStrategy(BaseStrategy):
     webhook_key: str = "flag"
     _MIN_BARS: int = 40  # 至少需要 40 根 K 线
 
-    def run(self) -> list[str]:
+    def run(self) -> tuple[list[str], dict[str, str]]:
         """
-        遍历全市场，返回满足高旗形整理条件的股票代码列表。
+        遍历全市场，返回满足高旗形整理条件的股票代码列表和选股理由。
 
         Returns:
-            满足条件的股票代码列表。
+            (selected, reasons): selected 为代码列表，reasons 为 {code: reason} 映射。
         """
         symbols = self.engine.get_local_symbols()
         selected: list[str] = []
+        reasons: dict[str, str] = {}
 
         for symbol in symbols:
             try:
@@ -52,21 +53,32 @@ class HighTightFlagStrategy(BaseStrategy):
                     continue
 
                 # 条件 1：强动量
-                momentum = high40 / low40 > 1.6
+                momentum_ratio = high40 / low40
+                momentum = momentum_ratio > 1.6
                 # 条件 2：极度收敛
-                consolidation = high10 / low10 < 1.15
+                consolidation_ratio = high10 / low10
+                consolidation = consolidation_ratio < 1.15
                 # 条件 3：高位抗跌（近10天最低点不得低于40天最高点的80%）
                 high_level = low10 >= high40 * 0.8
                 # 条件 4：缩量（向量化均值）
                 vol_ma20 = df["volume"].iloc[-21:-1].mean()
-                shrink = df["volume"].iloc[-1] < vol_ma20 * 0.6
+                vol_today = df["volume"].iloc[-1]
+                shrink = vol_today < vol_ma20 * 0.6
 
                 if momentum and consolidation and high_level and shrink:
                     selected.append(symbol)
+                    # 构建选股理由
+                    pct_gain = (momentum_ratio - 1) * 100
+                    vol_ratio = vol_today / vol_ma20 if vol_ma20 > 0 else 0
+                    reasons[symbol] = (
+                        f"40日涨幅{pct_gain:.1f}%，"
+                        f"近10日振幅{(consolidation_ratio - 1) * 100:.1f}%，"
+                        f"今日缩量至均量{vol_ratio:.0%}"
+                    )
 
             except Exception as exc:
                 logger.warning(f"[{symbol}] HighTightFlagStrategy 计算失败：{exc}")
                 continue
 
         logger.info(f"HighTightFlagStrategy 选出 {len(selected)} 只股票")
-        return selected
+        return selected, reasons

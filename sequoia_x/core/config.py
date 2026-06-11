@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     start_date: str = "2024-01-01"
     feishu_webhook_url: str  # 必填字段，缺失时抛出 ValidationError
     strategy_webhooks: dict[str, str] = {}
+    proxy: str = ""  # 代理地址，如 http://127.0.0.1:7897
 
     model_config = SettingsConfigDict(
         env_file=".env",
