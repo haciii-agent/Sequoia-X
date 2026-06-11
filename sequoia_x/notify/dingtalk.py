@@ -151,6 +151,10 @@ class DingTalkNotifier:
         today = date.today().strftime("%Y-%m-%d")
         top = ratings[:top_n]
 
+        # 批量查询中文名称
+        all_codes = [r.code for r in ratings]
+        names = self._get_stock_names(all_codes)
+
         lines = [
             f"## Sequoia-X AI 综合选股报告",
             f"**日期：** {today} | **分析：** {len(ratings)} 只 | **展示 TOP{top_n}**",
@@ -162,8 +166,9 @@ class DingTalkNotifier:
         ]
 
         for r in top:
+            name = names.get(r.code, r.name or r.code)
             lines.append(
-                f"| {r.rank} | {r.code} | {r.name} | **{r.total_score:.1f}** | "
+                f"| {r.rank} | {r.code} | {name} | **{r.total_score:.1f}** | "
                 f"{r.technical_score:.0f} | {r.fundamental_score:.0f} | "
                 f"{r.sentiment_score:.0f} | {r.event_score:.0f} | "
                 f"{r.capital_score:.0f} |"
@@ -175,8 +180,9 @@ class DingTalkNotifier:
 
         for r in top[:5]:
             em_code = self._to_eastmoney_code(r.code)
+            name = names.get(r.code, r.name or r.code)
             lines.append("")
-            lines.append(f"**{r.rank}. {r.code} {r.name}** — 综合 {r.total_score:.1f} 分")
+            lines.append(f"**{r.rank}. {r.code} {name}** — 综合 {r.total_score:.1f} 分")
 
             if r.tags:
                 lines.append(f"标签：{' '.join(r.tags)}")
