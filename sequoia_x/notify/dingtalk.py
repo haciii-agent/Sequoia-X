@@ -68,16 +68,39 @@ class DingTalkNotifier:
 
     @staticmethod
     def _get_stock_names(symbols: list[str]) -> dict[str, str]:
-        """通过 baostock 批量查询股票名称。"""
+        """通过 baostock 批量查询股票名称，北交所用东方财富补充。"""
         bs.login()
         mapping = {}
+        missing = []
         for code in symbols:
             prefix = "sh" if code.startswith(("6", "9")) else "sz"
             rs = bs.query_stock_basic(code=f"{prefix}.{code}")
+            found = False
             while rs.next():
                 row = rs.get_row_data()
-                mapping[code] = row[1]
+                if len(row) > 1 and row[1]:
+                    mapping[code] = row[1]
+                    found = True
+            if not found:
+                missing.append(code)
         bs.logout()
+
+        # 北交所等 baostock 查不到的，用东方财富 API
+        for code in missing:
+            try:
+                if code.startswith("6"):
+                    secid = f"1.{code}"
+                else:
+                    secid = f"0.{code}"
+                url = f"https://push2.eastmoney.com/api/qt/stock/get?secid={secid}&fields=f57,f58"
+                r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=5)
+                d = r.json().get("data", {})
+                name = d.get("f58", "")
+                if name:
+                    mapping[code] = name
+            except Exception:
+                pass
+
         return mapping
 
     def send(
