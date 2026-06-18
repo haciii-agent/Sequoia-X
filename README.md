@@ -187,17 +187,20 @@ cp .env.example .env
 
 再按实际情况修改 `.env`。
 
-当前 `Settings` 里主要用到：
+当前环境变量里主要用到：
 
 - `DB_PATH`：SQLite 路径
 - `START_DATE`：历史起始日
+- `DINGTALK_WEBHOOK`：钉钉机器人 webhook
+- `DINGTALK_SECRET`：钉钉机器人加签 secret
 - `FEISHU_WEBHOOK_URL`：兼容旧通知逻辑的默认 webhook
 - `STRATEGY_WEBHOOK_*`：策略级 webhook 映射（仍保留兼容）
 
 注意：
 
 - 目前主流程的综合报告推送主要走 **钉钉**
-- `.env.example` 里保留了飞书相关字段，主要用于兼容旧模块
+- `.env` 已被 `.gitignore` 忽略，**不会提交到 GitHub**
+- `.env.example` 只提供配置模板，不放真实密钥
 
 ---
 

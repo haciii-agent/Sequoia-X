@@ -1,24 +1,21 @@
 """钉钉通知模块：支持综合分析报告推送。"""
 
+import base64
 import hashlib
 import hmac
-import base64
 import json
+import os
 import time
 import urllib.parse
 from datetime import date
 
-import requests
 import baostock as bs
+import requests
 
-from sequoia_x.core.logger import get_logger
 from sequoia_x.analysis.scorer import StockRating
+from sequoia_x.core.logger import get_logger
 
 logger = get_logger(__name__)
-
-# 钉钉 Webhook 配置
-DINGTALK_WEBHOOK = "https://oapi.dingtalk.com/robot/send?access_token=3eb30f8d052e349dabf404d46d173ce3725a01434a21f4754c7ccc1bd1da8b80"
-DINGTALK_SECRET = "SECc00e1486253015c8048903db9dbdb4c3e8b1a331212bd2859c232ff16e059e33"
 
 # 策略中文名映射
 STRATEGY_NAMES = {
@@ -54,8 +51,12 @@ class DingTalkNotifier:
     """钉钉 Webhook 推送器（加签方式）。"""
 
     def __init__(self) -> None:
-        self.webhook_url = DINGTALK_WEBHOOK
-        self.secret = DINGTALK_SECRET
+        self.webhook_url = os.getenv("DINGTALK_WEBHOOK", "").strip()
+        self.secret = os.getenv("DINGTALK_SECRET", "").strip()
+        if not self.webhook_url or not self.secret:
+            raise ValueError(
+                "缺少钉钉配置：请在 .env 中设置 DINGTALK_WEBHOOK 和 DINGTALK_SECRET"
+            )
 
     @staticmethod
     def _to_eastmoney_code(code: str) -> str:
@@ -85,7 +86,6 @@ class DingTalkNotifier:
                 missing.append(code)
         bs.logout()
 
-        # 北交所等 baostock 查不到的，用东方财富 API
         for code in missing:
             try:
                 if code.startswith("6"):
@@ -93,9 +93,9 @@ class DingTalkNotifier:
                 else:
                     secid = f"0.{code}"
                 url = f"https://push2.eastmoney.com/api/qt/stock/get?secid={secid}&fields=f57,f58"
-                r = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=5)
-                d = r.json().get("data", {})
-                name = d.get("f58", "")
+                response = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=5)
+                data = response.json().get("data", {})
+                name = data.get("f58", "")
                 if name:
                     mapping[code] = name
             except Exception:
@@ -150,13 +150,11 @@ class DingTalkNotifier:
 
         today = date.today().strftime("%Y-%m-%d")
         top = ratings[:top_n]
-
-        # 批量查询中文名称
-        all_codes = [r.code for r in ratings]
+        all_codes = [rating.code for rating in ratings]
         names = self._get_stock_names(all_codes)
 
         lines = [
-            f"## Sequoia-X AI 综合选股报告",
+            "## Sequoia-X AI 综合选股报告",
             f"**日期：** {today} | **分析：** {len(ratings)} 只 | **展示 TOP{top_n}**",
             "",
             "### 综合排名",
@@ -165,57 +163,56 @@ class DingTalkNotifier:
             "|---|------|------|------|------|--------|------|------|------|",
         ]
 
-        for r in top:
-            name = names.get(r.code, r.name or r.code)
+        for rating in top:
+            name = names.get(rating.code, rating.name or rating.code)
             lines.append(
-                f"| {r.rank} | {r.code} | {name} | **{r.total_score:.1f}** | "
-                f"{r.technical_score:.0f} | {r.fundamental_score:.0f} | "
-                f"{r.sentiment_score:.0f} | {r.event_score:.0f} | "
-                f"{r.capital_score:.0f} |"
+                f"| {rating.rank} | {rating.code} | {name} | **{rating.total_score:.1f}** | "
+                f"{rating.technical_score:.0f} | {rating.fundamental_score:.0f} | "
+                f"{rating.sentiment_score:.0f} | {rating.event_score:.0f} | "
+                f"{rating.capital_score:.0f} |"
             )
 
-        # TOP5 详细分析
         lines.append("")
         lines.append("### TOP5 详细分析")
 
-        for r in top[:5]:
-            em_code = self._to_eastmoney_code(r.code)
-            name = names.get(r.code, r.name or r.code)
+        for rating in top[:5]:
+            em_code = self._to_eastmoney_code(rating.code)
+            name = names.get(rating.code, rating.name or rating.code)
             lines.append("")
-            lines.append(f"**{r.rank}. {r.code} {name}** — 综合 {r.total_score:.1f} 分")
+            lines.append(f"**{rating.rank}. {rating.code} {name}** — 综合 {rating.total_score:.1f} 分")
 
-            if r.tags:
-                lines.append(f"标签：{' '.join(r.tags)}")
+            if rating.tags:
+                lines.append(f"标签：{' '.join(rating.tags)}")
 
-            if r.strategies:
-                cn_strs = [STRATEGY_NAMES.get(s, s) for s in r.strategies]
+            if rating.strategies:
+                cn_strs = [STRATEGY_NAMES.get(strategy, strategy) for strategy in rating.strategies]
                 lines.append(f"策略：{'、'.join(cn_strs)}")
 
-            if r.fundamental:
-                f = r.fundamental
+            if rating.fundamental:
+                fundamental = rating.fundamental
                 parts = []
-                if f.revenue_growth != 0:
-                    parts.append(f"营收{'+'if f.revenue_growth>0 else ''}{f.revenue_growth:.1f}%")
-                if f.profit_growth != 0:
-                    parts.append(f"利润{'+'if f.profit_growth>0 else ''}{f.profit_growth:.1f}%")
-                if f.roe != 0:
-                    parts.append(f"ROE {f.roe:.1f}%")
-                if f.pe_ttm != 0:
-                    parts.append(f"PE {f.pe_ttm:.1f}")
+                if fundamental.revenue_growth != 0:
+                    parts.append(f"营收{'+' if fundamental.revenue_growth > 0 else ''}{fundamental.revenue_growth:.1f}%")
+                if fundamental.profit_growth != 0:
+                    parts.append(f"利润{'+' if fundamental.profit_growth > 0 else ''}{fundamental.profit_growth:.1f}%")
+                if fundamental.roe != 0:
+                    parts.append(f"ROE {fundamental.roe:.1f}%")
+                if fundamental.pe_ttm != 0:
+                    parts.append(f"PE {fundamental.pe_ttm:.1f}")
                 if parts:
                     lines.append(f"基本面：{'，'.join(parts)}")
-                if f.risk_flags:
-                    lines.append(f"风险：{' '.join(f.risk_flags)}")
+                if fundamental.risk_flags:
+                    lines.append(f"风险：{' '.join(fundamental.risk_flags)}")
 
-            if r.sentiment:
-                lines.append(f"舆情：{r.sentiment.summary}")
-                if r.sentiment.headlines:
-                    lines.append(f"热点：{'; '.join(r.sentiment.headlines[:3])}")
+            if rating.sentiment:
+                lines.append(f"舆情：{rating.sentiment.summary}")
+                if rating.sentiment.headlines:
+                    lines.append(f"热点：{'; '.join(rating.sentiment.headlines[:3])}")
 
-            if r.event:
-                lines.append(f"事件：{r.event.summary}")
-                if r.event.related_events:
-                    lines.append(f"政策：{'; '.join(r.event.related_events[:3])}")
+            if rating.event:
+                lines.append(f"事件：{rating.event.summary}")
+                if rating.event.related_events:
+                    lines.append(f"政策：{'; '.join(rating.event.related_events[:3])}")
 
             lines.append(f"[东方财富](https://quote.eastmoney.com/{em_code}.html)")
 
@@ -231,11 +228,6 @@ class DingTalkNotifier:
 
     def send_backtest_report(self, results: list) -> None:
         """推送回测报告。"""
-        from sequoia_x.analysis.backtest import BacktestResult
-        from sequoia_x.core.logger import get_logger
-        bt_logger = get_logger(__name__)
-
-        from datetime import date
         today = date.today().strftime("%Y-%m-%d")
 
         lines = [
@@ -246,47 +238,44 @@ class DingTalkNotifier:
             "|------|------|--------|----------|----------|------|--------|",
         ]
 
-        for r in results:
+        for result in results:
             lines.append(
-                f"| {r.strategy_name} | {r.win_rate:.1f}% | {r.profit_loss_ratio:.2f} | "
-                f"{r.total_return:+.1f}% | {r.max_drawdown:.1f}% | "
-                f"{r.sharpe_ratio:.2f} | {r.valid_trades} |"
+                f"| {result.strategy_name} | {result.win_rate:.1f}% | {result.profit_loss_ratio:.2f} | "
+                f"{result.total_return:+.1f}% | {result.max_drawdown:.1f}% | "
+                f"{result.sharpe_ratio:.2f} | {result.valid_trades} |"
             )
 
         lines.append("")
-        for r in results:
-            lines.append(f"**{r.strategy_name}**：{r.summary}")
+        for result in results:
+            lines.append(f"**{result.strategy_name}**：{result.summary}")
 
         lines.append("")
-        lines.append("---")
-        lines.append("回测数据仅供参考，历史表现不代表未来收益。")
+        lines.append("回测结果仅供研究，不构成投资建议。")
 
-        self._send_markdown(f"回测报告 ({today})", "\n".join(lines), "backtest")
+        self._send_markdown(
+            f"策略回测报告 ({today})",
+            "\n".join(lines),
+            "backtest",
+        )
 
-    def _send_markdown(self, title: str, markdown_text: str, webhook_key: str = "default") -> None:
+    def _send_markdown(self, title: str, text: str, webhook_key: str = "default") -> None:
         """发送 Markdown 消息到钉钉。"""
+        url = _sign_url(self.webhook_url, self.secret)
         payload = {
             "msgtype": "markdown",
             "markdown": {
                 "title": title,
-                "text": markdown_text,
+                "text": text,
             },
         }
 
-        url = _sign_url(self.webhook_url, self.secret)
-
         try:
-            resp = requests.post(
-                url,
-                data=json.dumps(payload),
-                headers={"Content-Type": "application/json"},
-                timeout=15,
-            )
-            resp_json = resp.json()
-
-            if resp.status_code != 200 or resp_json.get("errcode") != 0:
-                logger.error(f"钉钉推送失败 [{webhook_key}] HTTP={resp.status_code} 响应={resp.text}")
+            response = requests.post(url, json=payload, timeout=10)
+            response.raise_for_status()
+            result = response.json()
+            if result.get("errcode") == 0:
+                logger.info(f"钉钉推送成功 [{webhook_key}] {title}")
             else:
-                logger.info(f"钉钉推送成功 [{webhook_key}]")
-        except requests.RequestException as exc:
-            logger.error(f"钉钉推送异常 [{webhook_key}]：{exc}")
+                logger.error(f"钉钉推送失败 [{webhook_key}] err={result}")
+        except Exception as exc:
+            logger.error(f"钉钉推送异常 [{webhook_key}] {exc}")
