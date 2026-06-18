@@ -2,6 +2,7 @@ import base64
 import hashlib
 import hmac
 import json
+import os
 import sqlite3
 import time
 import urllib.parse
@@ -12,8 +13,6 @@ import requests
 
 DB_PATH = Path("data/sequoia_v2.db")
 STATE_PATH = Path("data/sequoia_v2.sync_state.json")
-WEBHOOK = "https://oapi.dingtalk.com/robot/send?access_token=3eb30f8d052e349dabf404d46d173ce3725a01434a21f4754c7ccc1bd1da8b80"
-SECRET = "SECc00e1486253015c8048903db9dbdb4c3e8b1a331212bd2859c232ff16e059e33"
 
 
 def sign_url(url: str, secret: str) -> str:
@@ -24,7 +23,16 @@ def sign_url(url: str, secret: str) -> str:
     return f"{url}&timestamp={timestamp}&sign={sign}"
 
 
+def get_dingtalk_config() -> tuple[str, str]:
+    webhook = os.getenv("DINGTALK_WEBHOOK", "").strip()
+    secret = os.getenv("DINGTALK_SECRET", "").strip()
+    if not webhook or not secret:
+        raise ValueError("缺少钉钉配置：请在 .env 中设置 DINGTALK_WEBHOOK 和 DINGTALK_SECRET")
+    return webhook, secret
+
+
 def main() -> None:
+    webhook, secret = get_dingtalk_config()
     target_date = (date.today() - timedelta(days=1)).isoformat()
     conn = sqlite3.connect(DB_PATH)
     cur = conn.cursor()
@@ -71,14 +79,14 @@ def main() -> None:
         lines.append(f"- 断点剩余股票：{remaining_chunk_symbols}")
     lines.append("")
     lines.append("### 最新日期分布")
-    for d, c in top_dates:
-        lines.append(f"- {d}: {c} 只")
+    for trade_date, count in top_dates:
+        lines.append(f"- {trade_date}: {count} 只")
 
     title = f"同步进度 {target_symbols}/{total_symbols}"
     text = "\n".join(lines)
 
-    resp = requests.post(
-        sign_url(WEBHOOK, SECRET),
+    response = requests.post(
+        sign_url(webhook, secret),
         json={
             "msgtype": "markdown",
             "markdown": {"title": title, "text": text},
@@ -86,9 +94,9 @@ def main() -> None:
         timeout=15,
     )
     print(text)
-    print(f"dingtalk_status={resp.status_code}")
+    print(f"dingtalk_status={response.status_code}")
     try:
-        print(resp.text[:500])
+        print(response.text[:500])
     except Exception:
         pass
 

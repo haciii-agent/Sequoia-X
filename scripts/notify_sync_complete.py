@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import hmac
+import os
 import sqlite3
 import time
 import urllib.parse
@@ -10,8 +11,6 @@ from pathlib import Path
 import requests
 
 DB_PATH = Path("data/sequoia_v2.db")
-WEBHOOK = "https://oapi.dingtalk.com/robot/send?access_token=3eb30f8d052e349dabf404d46d173ce3725a01434a21f4754c7ccc1bd1da8b80"
-SECRET = "SECc00e1486253015c8048903db9dbdb4c3e8b1a331212bd2859c232ff16e059e33"
 MARKER = Path("data/.sync_completed_2026_06_17.marker")
 
 
@@ -23,7 +22,16 @@ def sign_url(url: str, secret: str) -> str:
     return f"{url}&timestamp={timestamp}&sign={sign}"
 
 
+def get_dingtalk_config() -> tuple[str, str]:
+    webhook = os.getenv("DINGTALK_WEBHOOK", "").strip()
+    secret = os.getenv("DINGTALK_SECRET", "").strip()
+    if not webhook or not secret:
+        raise ValueError("缺少钉钉配置：请在 .env 中设置 DINGTALK_WEBHOOK 和 DINGTALK_SECRET")
+    return webhook, secret
+
+
 def main() -> None:
+    webhook, secret = get_dingtalk_config()
     target_date = (date.today() - timedelta(days=1)).isoformat()
     marker = MARKER.with_name(f".sync_completed_{target_date.replace('-', '_')}.marker")
     if marker.exists():
@@ -50,8 +58,8 @@ def main() -> None:
         "- 状态：全部股票都已补到昨天或更新",
     ])
 
-    resp = requests.post(
-        sign_url(WEBHOOK, SECRET),
+    response = requests.post(
+        sign_url(webhook, secret),
         json={
             "msgtype": "markdown",
             "markdown": {"title": "Sequoia-X 同步完成", "text": text},
@@ -60,9 +68,9 @@ def main() -> None:
     )
     marker.write_text("done\n", encoding="utf-8")
     print(text)
-    print(f"dingtalk_status={resp.status_code}")
+    print(f"dingtalk_status={response.status_code}")
     try:
-        print(resp.text[:500])
+        print(response.text[:500])
     except Exception:
         pass
 
