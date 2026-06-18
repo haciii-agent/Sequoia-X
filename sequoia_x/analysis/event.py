@@ -55,12 +55,22 @@ class EventAnalyzer:
         # 抓取最新宏观政策新闻
         macro_news = self._fetch_macro_news()
 
+        _consecutive_failures = 0
+        _network_down = False
         for code in codes:
             try:
+                if _network_down:
+                    results[code] = EventImpact(code=code, name=code, summary="网络不可用，跳过")
+                    continue
                 impact = self._analyze_one(code, macro_news)
                 results[code] = impact
+                _consecutive_failures = 0
             except Exception as e:
-                logger.warning(f"[{code}] 事件分析失败: {e}")
+                _consecutive_failures += 1
+                if _consecutive_failures >= 3:
+                    _network_down = True
+                    logger.warning("连续3次事件分析失败，跳过剩余")
+                logger.debug(f"[{code}] 事件分析失败: {e}")
                 results[code] = EventImpact(code=code, name=code, summary="分析失败")
 
         return results
@@ -184,7 +194,7 @@ class EventAnalyzer:
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
                 "Referer": "https://so.eastmoney.com/",
             }
-            resp = requests.get(url, params=params, headers=headers, timeout=10)
+            resp = requests.get(url, params=params, headers=headers, timeout=3)
             text = resp.text
             json_str = text[text.index("(") + 1: text.rindex(")")]
             data = json.loads(json_str)

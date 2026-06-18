@@ -57,3 +57,19 @@ __pycache__/
 
 # ML cache (large files)
 data/ml_cache/
+
+# 临时同步脚本
+sync_batch.py
+sync_debug.py
+sync_final.py
+sync_today.py
+sync_today2.py
+sync_today_concurrent.py
+sync_today_fix.py
+_sync_fix.py
+
+# 数据文件
+data/fund_full_scan.json
+data/fund_picks.json
+data/latest_news.json
+data/ml_cache/

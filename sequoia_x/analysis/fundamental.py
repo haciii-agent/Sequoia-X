@@ -47,12 +47,25 @@ class FundamentalAnalyzer:
             logger.warning(f"获取实时行情失败: {e}")
             spot_map = {}
 
+        # Circuit breaker: skip network calls if first few fail
+        _consecutive_failures = 0
+        _MAX_FAILURES = 3
+        _network_down = False
+
         for code in codes:
             try:
+                if _network_down:
+                    results[code] = FundamentalScore(code=code, summary="网络不可用，跳过")
+                    continue
                 score = self._analyze_one(code, spot_map.get(code, {}))
                 results[code] = score
+                _consecutive_failures = 0  # reset on success
             except Exception as e:
-                logger.warning(f"[{code}] 基本面分析失败: {e}")
+                _consecutive_failures += 1
+                if _consecutive_failures >= _MAX_FAILURES:
+                    _network_down = True
+                    logger.warning(f"连续 {_MAX_FAILURES} 次失败，跳过剩余基本面分析")
+                logger.debug(f"[{code}] 基本面分析失败: {e}")
                 results[code] = FundamentalScore(code=code, summary=f"数据获取失败: {e}")
 
         return results

@@ -33,23 +33,47 @@ CREATE INDEX IF NOT EXISTS idx_symbol_date ON stock_daily (symbol, date);
 
 def _bs_fetch_batch(tasks: list) -> list:
     """多进程 worker：独立 login，批量拉取 baostock 数据。"""
+    import time as _time
     import baostock as bs
-    bs.login()
+    try:
+        bs.login()
+    except Exception:
+        return []
     results = []
     for symbol, bs_code, start, end in tasks:
-        rs = bs.query_history_k_data_plus(
-            bs_code,
-            "date,open,high,low,close,volume,amount",
-            start_date=start,
-            end_date=end,
-            frequency="d",
-            adjustflag="1",  # 后复权
-        )
-        if rs.error_code != "0":
-            continue
-        while rs.next():
-            results.append([symbol] + rs.get_row_data())
-    bs.logout()
+        for attempt in range(3):
+            try:
+                rs = bs.query_history_k_data_plus(
+                    bs_code,
+                    "date,open,high,low,close,volume,amount",
+                    start_date=start,
+                    end_date=end,
+                    frequency="d",
+                    adjustflag="1",  # 后复权
+                )
+                if rs.error_code != "0":
+                    break
+                while rs.next():
+                    row = rs.get_row_data()
+                    if len(row) >= 7:
+                        results.append([symbol] + row[:7])
+                break
+            except Exception:
+                if attempt < 2:
+                    _time.sleep(2 ** (attempt + 1))
+                    try:
+                        bs.logout()
+                    except Exception:
+                        pass
+                    try:
+                        bs.login()
+                    except Exception:
+                        break
+                # skip this stock on final failure
+    try:
+        bs.logout()
+    except Exception:
+        pass
     return results
 
 
@@ -127,7 +151,7 @@ class DataEngine:
 
         logger.info(f"需要更新 {len(tasks)} 只股票，启动多进程并行拉取...")
 
-        n_workers = min(8, len(tasks))
+        n_workers = min(4, len(tasks))
         chunks = [tasks[i::n_workers] for i in range(n_workers)]
 
         with Pool(n_workers) as pool:

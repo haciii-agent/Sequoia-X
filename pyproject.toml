@@ -12,6 +12,7 @@ dependencies = [
     "requests>=2.31",
     "scikit-learn>=1.7.2",
     "joblib>=1.5.3",
+    "easytrader>=0.23.7",
 ]
 
 [project.optional-dependencies]

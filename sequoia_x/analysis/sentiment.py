@@ -50,13 +50,23 @@ class SentimentAnalyzer:
     def analyze(self, codes: list[str]) -> dict[str, SentimentScore]:
         """批量分析股票舆情。"""
         results = {}
+        _consecutive_failures = 0
+        _network_down = False
         for code in codes:
             try:
+                if _network_down:
+                    results[code] = SentimentScore(code=code, summary="网络不可用，跳过")
+                    continue
                 score = self._analyze_one(code)
                 results[code] = score
+                _consecutive_failures = 0
                 time.sleep(0.3)  # 限速
             except Exception as e:
-                logger.warning(f"[{code}] 舆情分析失败: {e}")
+                _consecutive_failures += 1
+                if _consecutive_failures >= 3:
+                    _network_down = True
+                    logger.warning("连续3次舆情分析失败，跳过剩余")
+                logger.debug(f"[{code}] 舆情分析失败: {e}")
                 results[code] = SentimentScore(code=code, summary=f"数据获取失败")
         return results
 
@@ -133,7 +143,7 @@ class SentimentAnalyzer:
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
                 "Referer": "https://so.eastmoney.com/",
             }
-            resp = requests.get(url, params=params, headers=headers, timeout=10)
+            resp = requests.get(url, params=params, headers=headers, timeout=3)
             text = resp.text
 
             # 解析 JSONP
@@ -185,7 +195,7 @@ class SentimentAnalyzer:
                 "pageNumber": 1,
             }
             headers = {"User-Agent": "Mozilla/5.0", "Referer": "https://data.eastmoney.com/"}
-            resp = requests.get(url, params=params, headers=headers, timeout=10)
+            resp = requests.get(url, params=params, headers=headers, timeout=3)
             data = resp.json()
             return {"count": data.get("hits", 0)}
         except Exception:

@@ -1,6 +1,8 @@
 """Sequoia-X AI 综合选股系统 V3 - 短线优化 + ML全市场训练。"""
 import sys
+import socket
 import argparse
+socket.setdefaulttimeout(3.0)
 from dotenv import load_dotenv
 load_dotenv()
 
