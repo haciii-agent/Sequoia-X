@@ -51,3 +51,18 @@ def test_unique_symbol_date_constraint(symbol: str, trade_date: date) -> None:
                 (symbol, str(trade_date)),
             ).fetchone()[0]
         assert count == 1
+
+
+def test_write_rows_skips_invalid_numeric_values() -> None:
+    """写库前应跳过空字符串/无效数值，避免同步因脏数据整批失败。"""
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        engine, _ = make_engine_in(tmp_dir)
+        written = engine._write_rows([
+            ["000001", "2026-06-17", "10", "11", "9", "10.5", "1000", "10500"],
+            ["000002", "2026-06-17", "", "11", "9", "10.5", "1000", "10500"],
+            ["000003", "2026-06-17", "10", "11", "9", "10.5", "", "10500"],
+        ])
+        assert written == 1
+        with sqlite3.connect(engine.db_path) as conn:
+            count = conn.execute("SELECT COUNT(*) FROM stock_daily").fetchone()[0]
+        assert count == 1
