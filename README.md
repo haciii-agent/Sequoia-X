@@ -89,6 +89,24 @@ uv run python main.py
 2. 跑策略
 3. 输出/推送筛选结果
 
+### 数据健康检查
+
+```bash
+uv run python scripts/check_data_health.py
+```
+
+这个脚本会输出：
+
+- 最近 3 个交易日完整覆盖率
+- 最近 60 个交易日完整覆盖率
+- 60 日窗口缺口分布
+- 当前最新 60 日窗口范围
+
+当前修复完成后的实测结果为：
+
+- 最近 3 个交易日完整覆盖：`5007 / 5012` (`99.9%`)
+- 最近 60 个交易日完整覆盖：`4790 / 5012` (`95.6%`)
+
 ### 2. 历史补洞模式
 
 ```bash
@@ -228,8 +246,11 @@ cp .env.example .env
 
 ### 1. 交易日 15:00 后同步数据
 
+当前建议不再依赖旧的 `sync_incremental.py` 定时任务，而是使用**腾讯财经补洞链路 + 健康检查**：
+
 ```bash
-uv run python sync_incremental.py
+uv run python scripts/repair_gap_60d_qq.py
+uv run python scripts/check_data_health.py
 ```
 
 ### 2. 交易日 16:00 后跑综合选股
