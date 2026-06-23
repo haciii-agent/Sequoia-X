@@ -1,0 +1,137 @@
+[
+  {
+    "name": "eastmoney_push2his",
+    "url": "https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=0.000001&fields1=f1,f2&fields2=f51,f52,f53,f54,f55,f56,f57,f58&klt=101&fqt=0&beg=20260323&end=20260618",
+    "proxy_mode": "default",
+    "error": "ProxyError(MaxRetryError(\"HTTPSConnectionPool(host='push2his.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/kline/get?secid=0.000001&fields1=f1,f2&fields2=f51,f52,f53,f54,f55,f56,f57,f58&klt=101&fqt=0&beg=20260323&end=20260618 (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))\"))"
+  },
+  {
+    "name": "eastmoney_push2his",
+    "url": "https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=0.000001&fields1=f1,f2&fields2=f51,f52,f53,f54,f55,f56,f57,f58&klt=101&fqt=0&beg=20260323&end=20260618",
+    "proxy_mode": "disabled",
+    "error": "ConnectionError(ProtocolError('Connection aborted.', RemoteDisconnected('Remote end closed connection without response')))"
+  },
+  {
+    "name": "eastmoney_push2his",
+    "url": "https://push2his.eastmoney.com/api/qt/stock/kline/get?secid=0.000001&fields1=f1,f2&fields2=f51,f52,f53,f54,f55,f56,f57,f58&klt=101&fqt=0&beg=20260323&end=20260618",
+    "proxy_mode": "explicit_7897",
+    "error": "ProxyError(MaxRetryError(\"HTTPSConnectionPool(host='push2his.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/kline/get?secid=0.000001&fields1=f1,f2&fields2=f51,f52,f53,f54,f55,f56,f57,f58&klt=101&fqt=0&beg=20260323&end=20260618 (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))\"))"
+  },
+  {
+    "name": "eastmoney_push2_quote",
+    "url": "https://push2.eastmoney.com/api/qt/stock/get?secid=0.000001&fields=f57,f58,f43,f44,f45,f46",
+    "proxy_mode": "default",
+    "error": "ProxyError(MaxRetryError(\"HTTPSConnectionPool(host='push2.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/get?secid=0.000001&fields=f57,f58,f43,f44,f45,f46 (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))\"))"
+  },
+  {
+    "name": "eastmoney_push2_quote",
+    "url": "https://push2.eastmoney.com/api/qt/stock/get?secid=0.000001&fields=f57,f58,f43,f44,f45,f46",
+    "proxy_mode": "disabled",
+    "error": "ConnectionError(ProtocolError('Connection aborted.', RemoteDisconnected('Remote end closed connection without response')))"
+  },
+  {
+    "name": "eastmoney_push2_quote",
+    "url": "https://push2.eastmoney.com/api/qt/stock/get?secid=0.000001&fields=f57,f58,f43,f44,f45,f46",
+    "proxy_mode": "explicit_7897",
+    "error": "ProxyError(MaxRetryError(\"HTTPSConnectionPool(host='push2.eastmoney.com', port=443): Max retries exceeded with url: /api/qt/stock/get?secid=0.000001&fields=f57,f58,f43,f44,f45,f46 (Caused by ProxyError('Unable to connect to proxy', RemoteDisconnected('Remote end closed connection without response')))\"))"
+  },
+  {
+    "name": "sina_quote",
+    "url": "https://hq.sinajs.cn/list=sz000001",
+    "proxy_mode": "default",
+    "status_code": 403,
+    "ok": false,
+    "text_head": "Forbidden",
+    "content_type": ""
+  },
+  {
+    "name": "sina_quote",
+    "url": "https://hq.sinajs.cn/list=sz000001",
+    "proxy_mode": "disabled",
+    "status_code": 403,
+    "ok": false,
+    "text_head": "Forbidden",
+    "content_type": ""
+  },
+  {
+    "name": "sina_quote",
+    "url": "https://hq.sinajs.cn/list=sz000001",
+    "proxy_mode": "explicit_7897",
+    "status_code": 403,
+    "ok": false,
+    "text_head": "Forbidden",
+    "content_type": ""
+  },
+  {
+    "name": "qq_quote",
+    "url": "https://qt.gtimg.cn/q=sz000001",
+    "proxy_mode": "default",
+    "status_code": 200,
+    "ok": true,
+    "text_head": "v_sz000001=\"51~平安银行~000001~10.65~10.52~10.52~1265317~662092~603224~10.64~3608~10.63~6583~10.62~3199~10.61~1684~10.60~5210~10.65~6448~10.66~1176~10.67~2669~10.68~6402~10.69~3940~~20260622161418~0.13~1.24~10.67~10.42~10.65/1265317/1334768053~1265317~133477~0.65~4.80~~10.67~10.42~2.38~2066.70~2066.73~0.45~11.57~9.47~0.92~-351~10.55~3.56~4.85~~~0.40~133476.8053~0.0000~0~ ~GP-A~-3.62~-5.25~5.60~7.91~0.71~12.73~10.07~0.28~3.20~5.55~19405600653~19405918198~-0.86~-3.57~19405600653~~~-5.28~0.09~~CNY~0~~1",
+    "content_type": "text/html; charset=GBK"
+  },
+  {
+    "name": "qq_quote",
+    "url": "https://qt.gtimg.cn/q=sz000001",
+    "proxy_mode": "disabled",
+    "status_code": 200,
+    "ok": true,
+    "text_head": "v_sz000001=\"51~平安银行~000001~10.65~10.52~10.52~1265317~662092~603224~10.64~3608~10.63~6583~10.62~3199~10.61~1684~10.60~5210~10.65~6448~10.66~1176~10.67~2669~10.68~6402~10.69~3940~~20260622161418~0.13~1.24~10.67~10.42~10.65/1265317/1334768053~1265317~133477~0.65~4.80~~10.67~10.42~2.38~2066.70~2066.73~0.45~11.57~9.47~0.92~-351~10.55~3.56~4.85~~~0.40~133476.8053~0.0000~0~ ~GP-A~-3.62~-5.25~5.60~7.91~0.71~12.73~10.07~0.28~3.20~5.55~19405600653~19405918198~-0.86~-3.57~19405600653~~~-5.28~0.09~~CNY~0~~1",
+    "content_type": "text/html; charset=GBK"
+  },
+  {
+    "name": "qq_quote",
+    "url": "https://qt.gtimg.cn/q=sz000001",
+    "proxy_mode": "explicit_7897",
+    "status_code": 200,
+    "ok": true,
+    "text_head": "v_sz000001=\"51~平安银行~000001~10.65~10.52~10.52~1265317~662092~603224~10.64~3608~10.63~6583~10.62~3199~10.61~1684~10.60~5210~10.65~6448~10.66~1176~10.67~2669~10.68~6402~10.69~3940~~20260622161418~0.13~1.24~10.67~10.42~10.65/1265317/1334768053~1265317~133477~0.65~4.80~~10.67~10.42~2.38~2066.70~2066.73~0.45~11.57~9.47~0.92~-351~10.55~3.56~4.85~~~0.40~133476.8053~0.0000~0~ ~GP-A~-3.62~-5.25~5.60~7.91~0.71~12.73~10.07~0.28~3.20~5.55~19405600653~19405918198~-0.86~-3.57~19405600653~~~-5.28~0.09~~CNY~0~~1",
+    "content_type": "text/html; charset=GBK"
+  },
+  {
+    "name": "netease_history",
+    "url": "https://quotes.money.163.com/service/chddata.html?code=1000001&start=20260323&end=20260618&fields=TCLOSE;HIGH;LOW;TOPEN;VOTURNOVER",
+    "proxy_mode": "default",
+    "status_code": 502,
+    "ok": false,
+    "text_head": "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body bgcolor=\"white\">\r\n<center><h1>502 Bad Gateway</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n",
+    "content_type": "text/html"
+  },
+  {
+    "name": "netease_history",
+    "url": "https://quotes.money.163.com/service/chddata.html?code=1000001&start=20260323&end=20260618&fields=TCLOSE;HIGH;LOW;TOPEN;VOTURNOVER",
+    "proxy_mode": "disabled",
+    "status_code": 502,
+    "ok": false,
+    "text_head": "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body bgcolor=\"white\">\r\n<center><h1>502 Bad Gateway</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n",
+    "content_type": "text/html"
+  },
+  {
+    "name": "netease_history",
+    "url": "https://quotes.money.163.com/service/chddata.html?code=1000001&start=20260323&end=20260618&fields=TCLOSE;HIGH;LOW;TOPEN;VOTURNOVER",
+    "proxy_mode": "explicit_7897",
+    "status_code": 502,
+    "ok": false,
+    "text_head": "<html>\r\n<head><title>502 Bad Gateway</title></head>\r\n<body bgcolor=\"white\">\r\n<center><h1>502 Bad Gateway</h1></center>\r\n<hr><center>nginx</center>\r\n</body>\r\n</html>\r\n",
+    "content_type": "text/html"
+  },
+  {
+    "name": "ifeng_quote",
+    "url": "https://api.finance.ifeng.com/akdaily/?code=sz000001&type=last",
+    "proxy_mode": "default",
+    "error": "SSLError(MaxRetryError(\"HTTPSConnectionPool(host='api.finance.ifeng.com', port=443): Max retries exceeded with url: /akdaily/?code=sz000001&type=last (Caused by SSLError(SSLEOFError(8, '[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in violation of protocol (_ssl.c:1016)')))\"))"
+  },
+  {
+    "name": "ifeng_quote",
+    "url": "https://api.finance.ifeng.com/akdaily/?code=sz000001&type=last",
+    "proxy_mode": "disabled",
+    "error": "ConnectionError(MaxRetryError('HTTPSConnectionPool(host=\\'api.finance.ifeng.com\\', port=443): Max retries exceeded with url: /akdaily/?code=sz000001&type=last (Caused by NameResolutionError(\"HTTPSConnection(host=\\'api.finance.ifeng.com\\', port=443): Failed to resolve \\'api.finance.ifeng.com\\' ([Errno 11001] getaddrinfo failed)\"))'))"
+  },
+  {
+    "name": "ifeng_quote",
+    "url": "https://api.finance.ifeng.com/akdaily/?code=sz000001&type=last",
+    "proxy_mode": "explicit_7897",
+    "error": "ConnectionError(ProtocolError('Connection aborted.', ConnectionAbortedError(10053, '你的主机中的软件中止了一个已建立的连接。', None, 10053, None)))"
+  }
+]

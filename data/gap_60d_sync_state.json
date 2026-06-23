@@ -1,0 +1,13 @@
+{
+  "cursor": 1509,
+  "completed_cycles": 0,
+  "last_total_symbols": 1818,
+  "last_run_at": "2026-06-23 17:10:52",
+  "last_processed": 400,
+  "last_success": 399,
+  "last_failed": 1,
+  "last_written": 23899,
+  "last_window_start": "2026-03-23",
+  "last_window_end": "2026-06-18",
+  "last_cycle_completed": false
+}
