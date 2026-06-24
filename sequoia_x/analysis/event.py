@@ -1,5 +1,6 @@
 """事件解读模块：抓取行业/政策新闻，分析对个股的影响程度。"""
 
+import os
 import re
 import json
 import requests
@@ -76,33 +77,58 @@ class EventAnalyzer:
         return results
 
     def _load_industry_map(self, codes: list[str]):
-        """批量获取股票所属行业。"""
-        try:
-            import akshare as ak
-            spot_df = ak.stock_zh_a_spot_em()
-            spot_df["代码"] = spot_df["代码"].astype(str).str.zfill(6)
-            for _, row in spot_df[spot_df["代码"].isin(codes)].iterrows():
-                self._industry_cache[row["代码"]] = ""
-        except Exception:
-            pass
+        """批量获取股票所属行业。
 
-        # 通过 baostock 获取行业
-        try:
-            import baostock as bs
-            bs.login()
-            for code in codes:
-                if code not in self._industry_cache:
-                    continue
-                prefix = "sh" if code.startswith(("6", "9")) else "sz"
-                rs = bs.query_stock_industry(code=f"{prefix}.{code}")
-                while rs.next():
-                    row = rs.get_row_data()
-                    if len(row) > 1:
-                        self._industry_cache[code] = row[1]
-                        break
-            bs.logout()
-        except Exception as e:
-            logger.debug(f"行业数据获取失败: {e}")
+        优先用东方财富 F10 接口（稳定，直连无代理问题），
+        baostock 作为兜底。
+        """
+        # 清除代理（本机环境代理会导致东方财富接口失败）
+        for _k in ["HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy", "all_proxy", "ALL_PROXY"]:
+            os.environ.pop(_k, None)
+
+        import requests
+
+        # 方式 1：东方财富 F10 公司概况接口（逐只获取，但稳定）
+        for code in codes:
+            try:
+                market = "SH" if code.startswith(("6", "9")) else "SZ"
+                url = f"https://emweb.securities.eastmoney.com/PC_HSF10/CompanySurvey/PageAjax?code={market}{code}"
+                r = requests.get(
+                    url,
+                    headers={"User-Agent": "Mozilla/5.0", "Referer": "https://emweb.securities.eastmoney.com/"},
+                    timeout=5,
+                )
+                data = r.json()
+                jbzl = data.get("jbzl", {})
+                if isinstance(jbzl, list) and jbzl:
+                    for item in jbzl:
+                        if isinstance(item, dict):
+                            for k, v in item.items():
+                                if "INDUSTRY" in str(k).upper() and v:
+                                    self._industry_cache[code] = str(v)
+                                    break
+                            if code in self._industry_cache:
+                                break
+            except Exception:
+                pass
+
+        # 方式 2：baostock 兜底（F10 未拿到的）
+        missing = [c for c in codes if c not in self._industry_cache]
+        if missing:
+            try:
+                import baostock as bs
+                bs.login()
+                for code in missing:
+                    prefix = "sh" if code.startswith(("6", "9")) else "sz"
+                    rs = bs.query_stock_industry(code=f"{prefix}.{code}")
+                    while rs.next():
+                        row = rs.get_row_data()
+                        if len(row) > 1:
+                            self._industry_cache[code] = row[1]
+                            break
+                bs.logout()
+            except Exception as e:
+                logger.debug(f"baostock 行业数据获取失败: {e}")
 
     def _analyze_one(self, code: str, macro_news: list[dict]) -> EventImpact:
         """分析单只股票的事件影响。"""

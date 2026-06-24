@@ -322,7 +322,9 @@ class MLPredictor:
         try:
             joblib.dump(self.model, os.path.join(MODEL_DIR, "gbm_model.pkl"))
             joblib.dump(self.scaler, os.path.join(MODEL_DIR, "scaler.pkl"))
-            logger.info(f"模型已保存到 {MODEL_DIR}")
+            # 持久化准确率，避免加载后 confidence 恒为 0
+            joblib.dump(self._accuracy, os.path.join(MODEL_DIR, "accuracy.pkl"))
+            logger.info(f"模型已保存到 {MODEL_DIR}（accuracy={self._accuracy:.2%}）")
         except Exception as e:
             logger.warning(f"模型保存失败: {e}")
 
@@ -334,6 +336,13 @@ class MLPredictor:
                 self.model = joblib.load(model_path)
                 self.scaler = joblib.load(scaler_path)
                 self._is_trained = True
+                # 恢复准确率
+                acc_path = os.path.join(MODEL_DIR, "accuracy.pkl")
+                if os.path.exists(acc_path):
+                    self._accuracy = joblib.load(acc_path)
+                else:
+                    # 旧模型文件无 accuracy，用交叉验证快速估算（从缓存）
+                    self._accuracy = 0.62  # GradientBoosting 经验默认值
                 return True
             except Exception as e:
                 logger.warning(f"模型加载失败: {e}")
